@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Faça seu pedido</title>
+<style>
+:root{--fundo:#1d1f1e;--giz:#f4f1ea;--ambar:#f6a21e;--painel:#2a2d2b;--linha:#44484a;--verde:#4caf70;--vermelho:#ff6b5a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:var(--giz);font:16px/1.4 "Trebuchet MS",system-ui,sans-serif;padding-bottom:90px}
+header{padding:28px 18px 16px;border-bottom:3px solid var(--ambar)}
+h1{margin:0;font-size:26px;color:var(--ambar)}
+#status{margin:6px 0 0;font-size:15px}
+.aberto{color:var(--verde)}.fechado{color:var(--vermelho)}
+main{padding:8px 14px}
+h2{font-size:20px;margin:18px 4px 8px}
+.item{display:block;width:100%;text-align:left;background:var(--painel);color:var(--giz);border:1px solid var(--linha);border-radius:10px;padding:14px;margin-bottom:10px;font:inherit}
+.item b{display:block;font-size:17px}
+.item small{display:block;color:#b9b6ad;margin-top:2px}
+.item span{display:block;color:var(--ambar);margin-top:6px;font-weight:bold}
+#verCarrinho{position:fixed;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));background:var(--ambar);color:#1d1f1e;border:0;border-radius:12px;padding:16px;font:bold 17px inherit;font-family:inherit}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;z-index:5}
+.modal[hidden]{display:none}
+.box{background:var(--fundo);width:100%;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px;border-top:3px solid var(--ambar)}
+.box h3{margin:0 0 4px;font-size:21px;color:var(--ambar)}
+.box h4{margin:16px 0 6px;font-size:16px}
+.box small{color:#b9b6ad}
+label{display:block;padding:9px 6px;border-bottom:1px solid var(--linha)}
+label input{margin-right:8px;transform:scale(1.2)}
+input[type=text],input[type=tel],#obs{width:100%;padding:12px;margin-top:8px;border-radius:8px;border:1px solid var(--linha);background:var(--painel);color:var(--giz);font:inherit}
+button{font-family:inherit}
+.prim,.sec{display:block;width:100%;padding:14px;border-radius:10px;font-size:16px;margin-top:12px;border:0}
+.prim{background:var(--ambar);color:#1d1f1e;font-weight:bold}
+.sec{background:none;color:var(--giz);border:1px solid var(--linha)}
+.prim:disabled{opacity:.6}
+.qtd{display:flex;align-items:center;gap:18px;margin-top:14px}
+.qtd button{width:44px;height:44px;border-radius:50%;border:1px solid var(--ambar);background:none;color:var(--ambar);font-size:22px}
+.li{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--linha)}
+.li small{display:block}
+.li button{margin-left:8px;background:none;border:0;color:var(--vermelho);font-size:18px}
+.total{font-size:19px;margin:14px 0 0}
+</style>
+</head>
+<body>
+<header><h1 id="nome"></h1><p id="status"></p></header>
+<main id="menu"></main>
+<button id="verCarrinho" hidden></button>
+<div class="modal" id="modal" hidden><div class="box" id="boxModal"></div></div>
+<div class="modal" id="carrinho" hidden><div class="box" id="boxCarrinho"></div></div>
+
+<script src="config.js"></script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getFirestore,collection,addDoc,serverTimestamp,doc,getDoc} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const C = window.APP_CONFIG;
+let db = null;
+try { db = getFirestore(initializeApp(C.firebase)); } catch (e) { console.error(e); }
+
+const $ = id => document.getElementById(id);
+const R = v => "R$ " + v.toFixed(2).replace(".", ",");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+// ===== CARDÁPIO PROVISÓRIO (depois vem do painel do dono) =====
+const TAM = ["P", "M", "G"];
+const GUARN = ["Farofa de couve", "Macarrão", "Vinagrete", "Maionese"];
+const A = [20, 22, 25];
+const MENU = [
+  {nome: "Galinha caipira ao molho", precos: A},
+  {nome: "Linguiça assada na grill", precos: A},
+  {nome: "Lombo assado suíno na grill", precos: A},
+  {nome: "Filé de frango assado no grill", precos: A},
+  {nome: "Filé de frango grelhado", precos: A},
+  {nome: "Feijoada", precos: [23, 26, 30], desc: "Não vai outra mistura"},
+  {nome: "Baião de dois", precos: [23, 26, 30], desc: "Vai só uma mistura", mistura: ["Galinha caipira ao molho", "Lombo assado", "Linguiça assada"]},
+  {nome: "Churrasco misto", precos: [22, 25, 27], desc: "Carne, linguiça e lombo"},
+  {nome: "Parmegiana de carne", precos: [27, 30, 35], desc: "Não vai outra mistura"},
+  {nome: "Contra filé acebolado", precos: [27, 30, 35], desc: "Não vai outra mistura"},
+  {nome: "Parmegiana de frango", precos: [25, 27, 30], desc: "Não vai outra mistura"}
+];
+
+let loja = {aberta: true}, cart = [];
+
+$("nome").textContent = C.nome;
+document.title = C.nome;
+
+function status() {
+  const ab = loja.aberta !== false;
+  $("status").textContent = ab ? "Aberto: faça seu pedido" : "Loja fechada no momento";
+  $("status").className = ab ? "aberto" : "fechado";
+}
+status();
+
+async function carregarLoja() {
+  if (!db) return;
+  try {
+    const s = await getDoc(doc(db, "config", "loja"));
+    if (s.exists()) {
+      loja = {...loja, ...s.data()};
+      if (loja.whatsapp) C.whatsapp = loja.whatsapp;
+      if (loja.taxaEntrega != null) C.taxaEntrega = Number(loja.taxaEntrega);
+    }
+  } catch (e) { console.error(e); }
+  status();
+}
+carregarLoja();
+
+$("menu").innerHTML = "<h2>Marmitas</h2>" + MENU.map((m, i) =>
+  `<button class="item" data-i="${i}"><b>${m.nome}</b>${m.desc ? `<small>${m.desc}</small>` : ""}<span>a partir de ${R(m.precos[0])}</span></button>`).join("");
+$("menu").onclick = e => { const b = e.target.closest(".item"); if (b) abrir(+b.dataset.i); };
+
+function fechar() { $("modal").hidden = true; $("carrinho").hidden = true; }
+
+function abrir(i) {
+  const m = MENU[i]; let qtd = 1;
+  $("boxModal").innerHTML = `<h3>${m.nome}</h3><small>${m.desc || ""}</small>
+  <h4>Tamanho</h4>${TAM.map((t, k) => `<label><input type="radio" name="tam" value="${k}" ${k == 0 ? "checked" : ""}>${t}: ${R(m.precos[k])}</label>`).join("")}
+  ${m.mistura ? "<h4>Escolha 1 mistura</h4>" + m.mistura.map(x => `<label><input type="radio" name="mist" value="${x}">${x}</label>`).join("") : ""}
+  <h4>Guarnições (escolha 2)</h4>${GUARN.map(g => `<label><input type="checkbox" name="g" value="${g}">${g}</label>`).join("")}
+  <h4>Observação</h4><input id="obs" type="text" placeholder="Ex.: sem cebola">
+  <div class="qtd"><button id="menos">−</button><b id="q">1</b><button id="mais">+</button></div>
+  <button class="prim" id="add">Adicionar ao pedido</button><button class="sec" id="cancelar">Cancelar</button>`;
+  $("modal").hidden = false;
+  $("menos").onclick = () => { if (qtd > 1) $("q").textContent = --qtd; };
+  $("mais").onclick = () => { $("q").textContent = ++qtd; };
+  $("cancelar").onclick = fechar;
+  $("add").onclick = () => {
+    const k = +document.querySelector("input[name=tam]:checked").value;
+    const g = [...document.querySelectorAll("input[name=g]:checked")].map(x => x.value);
+    if (g.length !== 2) return alert("Escolha exatamente 2 guarnições.");
+    let mist = "";
+    if (m.mistura) {
+      const x = document.querySelector("input[name=mist]:checked");
+      if (!x) return alert("Escolha a mistura.");
+      mist = x.value;
+    }
+    cart.push({nome: m.nome, tam: TAM[k], preco: m.precos[k], qtd, guarn: g, mist, obs: $("obs").value.trim()});
+    fechar(); botao();
+  };
+}
+
+function botao() {
+  const n = cart.reduce((s, x) => s + x.qtd, 0), sub = cart.reduce((s, x) => s + x.preco * x.qtd, 0);
+  $("verCarrinho").hidden = n === 0;
+  $("verCarrinho").textContent = `Ver pedido (${n}) · ${R(sub)}`;
+}
+$("verCarrinho").onclick = carrinho;
+
+function carrinho() {
+  const sub = cart.reduce((s, x) => s + x.preco * x.qtd, 0);
+  if (!cart.length) { fechar(); botao(); return; }
+  $("boxCarrinho").innerHTML = `<h3>Seu pedido</h3>` + cart.map((x, k) =>
+    `<div class="li"><div><b>${x.qtd}x ${x.nome} (${x.tam})</b><small>${x.mist ? esc(x.mist) + " · " : ""}${x.guarn.join(", ")}${x.obs ? " · " + esc(x.obs) : ""}</small></div><div>${R(x.preco * x.qtd)}<button data-rm="${k}">✕</button></div></div>`).join("") + `
+  <h4>Como quer receber?</h4>
+  <label><input type="radio" name="tipo" value="entrega" checked>Entrega (+${R(C.taxaEntrega)})</label>
+  <label><input type="radio" name="tipo" value="retirada">Retirada no balcão</label>
+  <input id="cNome" type="text" placeholder="Seu nome">
+  <input id="cTel" type="tel" placeholder="Seu telefone">
+  <input id="cEnd" type="text" placeholder="Endereço completo (rua, número, bairro)">
+  <h4>Pagamento</h4>${C.pagamentos.map(p => `<label><input type="radio" name="pg" value="${p}">${p}</label>`).join("")}
+  <input id="cTroco" type="text" placeholder="Troco para quanto?" hidden>
+  <p class="total">Total: <b id="tot"></b></p>
+  <button class="prim" id="enviar">Enviar pedido pelo WhatsApp</button>
+  <button class="sec" id="voltar">Continuar escolhendo</button>`;
+  $("carrinho").hidden = false;
+  const tipo = () => document.querySelector("input[name=tipo]:checked").value;
+  const taxa = () => tipo() === "entrega" ? C.taxaEntrega : 0;
+  const atualiza = () => { $("tot").textContent = R(sub + taxa()); $("cEnd").hidden = tipo() !== "entrega"; };
+  atualiza();
+  document.querySelectorAll("input[name=tipo]").forEach(r => r.onchange = atualiza);
+  document.querySelectorAll("input[name=pg]").forEach(r => r.onchange = () => { $("cTroco").hidden = r.value !== "Dinheiro"; });
+  $("boxCarrinho").querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { cart.splice(+b.dataset.rm, 1); botao(); carrinho(); });
+  $("voltar").onclick = fechar;
+  $("enviar").onclick = async () => {
+    if (loja.aberta === false) return alert("A loja está fechada no momento.");
+    const nome = $("cNome").value.trim(), tel = $("cTel").value.trim(), end = $("cEnd").value.trim();
+    const pg = document.querySelector("input[name=pg]:checked");
+    if (!nome || !tel) return alert("Preencha seu nome e telefone.");
+    if (tipo() === "entrega" && !end) return alert("Informe o endereço de entrega.");
+    if (!pg) return alert("Escolha a forma de pagamento.");
+    const total = sub + taxa(), troco = pg.value === "Dinheiro" ? $("cTroco").value.trim() : "";
+    const pedido = {
+      cliente: nome, telefone: tel, tipo: tipo(), endereco: tipo() === "entrega" ? end : "",
+      pagamento: pg.value, troco, taxaEntrega: taxa(), total, status: "novo",
+      itens: cart.map(x => ({nome: x.nome, tamanho: x.tam, qtd: x.qtd, preco: x.preco, guarnicoes: x.guarn, mistura: x.mist, obs: x.obs}))
+    };
+    $("enviar").disabled = true; $("enviar").textContent = "Enviando...";
+    if (db) {
+      try {
+        await Promise.race([addDoc(collection(db, "pedidos"), {...pedido, criadoEm: serverTimestamp()}), new Promise((_, no) => setTimeout(no, 4000))]);
+      } catch (e) { console.error("Pedido não salvo:", e); }
+    }
+    let msg = `*NOVO PEDIDO*\n\n`;
+    cart.forEach(x => {
+      msg += `${x.qtd}x ${x.nome} (${x.tam}) - ${R(x.preco * x.qtd)}\n`;
+      if (x.mist) msg += `   Mistura: ${x.mist}\n`;
+      msg += `   Guarnições: ${x.guarn.join(", ")}\n`;
+      if (x.obs) msg += `   Obs: ${x.obs}\n`;
+    });
+    msg += `\nSubtotal: ${R(sub)}\n`;
+    if (taxa()) msg += `Taxa de entrega: ${R(taxa())}\n`;
+    msg += `*Total: ${R(total)}*\n\n*Cliente:* ${nome}\n*Telefone:* ${tel}\n`;
+    msg += tipo() === "entrega" ? `*Entrega em:* ${end}\n` : `*Retirada no balcão*\n`;
+    msg += `*Pagamento:* ${pg.value}${troco ? " (troco para " + troco + ")" : ""}`;
+    cart = [];
+    location.href = "https://wa.me/" + C.whatsapp + "?text=" + encodeURIComponent(msg);
+  };
+}
+</script>
+</body>
+</html>
