@@ -5,36 +5,49 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Faça seu pedido</title>
 <style>
-:root{--fundo:#1d1f1e;--giz:#f4f1ea;--ambar:#f6a21e;--painel:#2a2d2b;--linha:#44484a;--verde:#4caf70;--vermelho:#ff6b5a}
+:root{--fundo:#1a1412;--card:#241c19;--chip:#2c2320;--linha:#3b2f2a;--giz:#f3ece8;--mudo:#b5a69e;--cor:#e8603c;--verde:#3ecf6e;--vermelho:#ff6b5a}
 *{box-sizing:border-box}
-body{margin:0;background:var(--fundo);color:var(--giz);font:16px/1.4 "Trebuchet MS",system-ui,sans-serif;padding-bottom:90px}
-header{padding:28px 18px 16px;border-bottom:3px solid var(--ambar)}
-h1{margin:0;font-size:26px;color:var(--ambar)}
-#status{margin:6px 0 0;font-size:15px}
-.aberto{color:var(--verde)}.fechado{color:var(--vermelho)}
-main{padding:8px 14px}
-h2{font-size:20px;margin:18px 4px 8px}
-.item{display:block;width:100%;text-align:left;background:var(--painel);color:var(--giz);border:1px solid var(--linha);border-radius:10px;padding:14px;margin-bottom:10px;font:inherit}
-.item b{display:block;font-size:17px}
-.item small{display:block;color:#b9b6ad;margin-top:2px}
-.item span{display:block;color:var(--ambar);margin-top:6px;font-weight:bold}
-#verCarrinho{position:fixed;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));background:var(--ambar);color:#1d1f1e;border:0;border-radius:12px;padding:16px;font:bold 17px inherit;font-family:inherit}
+body{margin:0;background:var(--fundo);color:var(--giz);font:16px/1.4 system-ui,"Segoe UI",Roboto,sans-serif;padding-bottom:96px}
+button{font-family:inherit}
+.capa{height:210px;background:#000 center/cover no-repeat;border-radius:0 0 28px 28px}
+.capa[hidden],.logo[hidden],.abas[hidden]{display:none}
+.logo{width:96px;height:96px;border-radius:50%;border:4px solid #fff;margin:-48px 0 0;display:block;background:#fff;object-fit:cover;position:relative}
+header{padding:0 20px}
+h1{margin:14px 0 4px;font-size:28px;line-height:1.15}
+.sub{margin:0;color:var(--mudo)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.chip{background:var(--chip);border-radius:999px;padding:9px 14px;font-size:15px;display:inline-flex;align-items:center;gap:8px}
+.chip[hidden]{display:none}
+.ponto{width:11px;height:11px;border-radius:50%;background:var(--verde)}
+.fechado .ponto{background:var(--vermelho)}
+.abas{position:sticky;top:0;z-index:3;display:flex;gap:10px;overflow-x:auto;padding:10px 20px;background:var(--fundo)}
+.aba{white-space:nowrap;background:none;border:1px solid var(--linha);color:var(--giz);border-radius:999px;padding:10px 16px;font-size:16px;font-weight:600}
+main{padding:0 20px}
+h2{font-size:24px;margin:22px 0 12px}
+.item{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);color:var(--giz);border:1px solid var(--linha);border-radius:18px;padding:14px;margin-bottom:12px;font:inherit}
+.ico{flex:none;width:64px;height:64px;border-radius:16px;background:var(--chip);display:grid;place-items:center;font-size:32px}
+.txt{flex:1;min-width:0}
+.txt b{display:block;font-size:18px}
+.txt small{display:block;color:var(--mudo)}
+.txt span{display:block;color:var(--cor);font-weight:700;margin-top:4px}
+.esc{flex:none;border:1px solid var(--linha);border-radius:12px;padding:10px 16px;font-weight:600}
+#verCarrinho{position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));background:var(--cor);color:#fff;border:0;border-radius:16px;padding:17px;font-size:17px;font-weight:700;z-index:4}
+#verCarrinho[hidden]{display:none}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;z-index:5}
 .modal[hidden]{display:none}
-.box{background:var(--fundo);width:100%;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px;border-top:3px solid var(--ambar)}
-.box h3{margin:0 0 4px;font-size:21px;color:var(--ambar)}
-.box h4{margin:16px 0 6px;font-size:16px}
-.box small{color:#b9b6ad}
-label{display:block;padding:9px 6px;border-bottom:1px solid var(--linha)}
-label input{margin-right:8px;transform:scale(1.2)}
-input[type=text],input[type=tel],#obs{width:100%;padding:12px;margin-top:8px;border-radius:8px;border:1px solid var(--linha);background:var(--painel);color:var(--giz);font:inherit}
-button{font-family:inherit}
-.prim,.sec{display:block;width:100%;padding:14px;border-radius:10px;font-size:16px;margin-top:12px;border:0}
-.prim{background:var(--ambar);color:#1d1f1e;font-weight:bold}
+.box{background:var(--fundo);width:100%;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:20px;border-top:3px solid var(--cor)}
+.box h3{margin:0 0 4px;font-size:22px}
+.box h4{margin:18px 0 6px;font-size:16px}
+.box small{color:var(--mudo)}
+label{display:block;padding:10px 6px;border-bottom:1px solid var(--linha)}
+label input{margin-right:10px;transform:scale(1.25);accent-color:var(--cor)}
+input[type=text],input[type=tel],#obs{width:100%;padding:13px;margin-top:8px;border-radius:12px;border:1px solid var(--linha);background:var(--card);color:var(--giz);font:inherit}
+.prim,.sec{display:block;width:100%;padding:15px;border-radius:14px;font-size:16px;margin-top:12px;border:0}
+.prim{background:var(--cor);color:#fff;font-weight:700}
 .sec{background:none;color:var(--giz);border:1px solid var(--linha)}
 .prim:disabled{opacity:.6}
 .qtd{display:flex;align-items:center;gap:18px;margin-top:14px}
-.qtd button{width:44px;height:44px;border-radius:50%;border:1px solid var(--ambar);background:none;color:var(--ambar);font-size:22px}
+.qtd button{width:44px;height:44px;border-radius:50%;border:1px solid var(--cor);background:none;color:var(--cor);font-size:22px}
 .li{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--linha)}
 .li small{display:block}
 .li button{margin-left:8px;background:none;border:0;color:var(--vermelho);font-size:18px}
@@ -42,7 +55,11 @@ button{font-family:inherit}
 </style>
 </head>
 <body>
-<header><h1 id="nome"></h1><p id="status"></p></header>
+<div class="capa" id="capa"></div>
+<header><img class="logo" id="logo" alt="Logo">
+<h1 id="nome"></h1><p class="sub">Escolha seus pratos e finalize pelo WhatsApp</p>
+<div class="chips"><span class="chip" id="chipStatus"><i class="ponto"></i><span id="status"></span></span><span class="chip" id="chipTempo" hidden></span><span class="chip" id="chipTaxa"></span></div></header>
+<nav class="abas" id="abas"></nav>
 <main id="menu"></main>
 <button id="verCarrinho" hidden></button>
 <div class="modal" id="modal" hidden><div class="box" id="boxModal"></div></div>
@@ -79,15 +96,20 @@ const MENU = [
   {nome: "Parmegiana de frango", precos: [25, 27, 30], desc: "Não vai outra mistura"}
 ];
 
+const SECOES = [{nome: "Marmitas", emoji: "🍱", itens: MENU}];
 let loja = {aberta: true}, cart = [];
 
 $("nome").textContent = C.nome;
 document.title = C.nome;
+if (C.capa) $("capa").style.backgroundImage = `url(${C.capa})`; else $("capa").hidden = true;
+if (C.logo) $("logo").src = C.logo; else $("logo").hidden = true;
+if (C.tempo) { $("chipTempo").hidden = false; $("chipTempo").textContent = "⏱ " + C.tempo; }
 
 function status() {
   const ab = loja.aberta !== false;
-  $("status").textContent = ab ? "Aberto: faça seu pedido" : "Loja fechada no momento";
-  $("status").className = ab ? "aberto" : "fechado";
+  $("status").textContent = ab ? "Aberto agora" : "Fechado no momento";
+  $("chipStatus").className = "chip" + (ab ? "" : " fechado");
+  $("chipTaxa").textContent = "🛵 Entrega " + R(C.taxaEntrega);
 }
 status();
 
@@ -105,14 +127,17 @@ async function carregarLoja() {
 }
 carregarLoja();
 
-$("menu").innerHTML = "<h2>Marmitas</h2>" + MENU.map((m, i) =>
-  `<button class="item" data-i="${i}"><b>${m.nome}</b>${m.desc ? `<small>${m.desc}</small>` : ""}<span>a partir de ${R(m.precos[0])}</span></button>`).join("");
-$("menu").onclick = e => { const b = e.target.closest(".item"); if (b) abrir(+b.dataset.i); };
+$("menu").innerHTML = SECOES.map((s, si) => `<h2 id="sec${si}">${s.emoji} ${s.nome}</h2>` + s.itens.map((m, i) =>
+  `<button class="item" data-s="${si}" data-i="${i}"><span class="ico">${s.emoji}</span><span class="txt"><b>${m.nome}</b>${m.desc ? `<small>${m.desc}</small>` : ""}<span>a partir de ${R(m.precos[0])}</span></span><span class="esc">Escolher</span></button>`).join("")).join("");
+$("menu").onclick = e => { const b = e.target.closest(".item"); if (b) abrir(+b.dataset.s, +b.dataset.i); };
+$("abas").hidden = SECOES.length < 2;
+$("abas").innerHTML = SECOES.map((s, k) => `<button class="aba" data-k="${k}">${s.emoji} ${s.nome}</button>`).join("");
+$("abas").onclick = e => { const b = e.target.closest(".aba"); if (b) $("sec" + b.dataset.k).scrollIntoView({behavior: "smooth"}); };
 
 function fechar() { $("modal").hidden = true; $("carrinho").hidden = true; }
 
-function abrir(i) {
-  const m = MENU[i]; let qtd = 1;
+function abrir(si, i) {
+  const m = SECOES[si].itens[i]; let qtd = 1;
   $("boxModal").innerHTML = `<h3>${m.nome}</h3><small>${m.desc || ""}</small>
   <h4>Tamanho</h4>${TAM.map((t, k) => `<label><input type="radio" name="tam" value="${k}" ${k == 0 ? "checked" : ""}>${t}: ${R(m.precos[k])}</label>`).join("")}
   ${m.mistura ? "<h4>Escolha 1 mistura</h4>" + m.mistura.map(x => `<label><input type="radio" name="mist" value="${x}">${x}</label>`).join("") : ""}

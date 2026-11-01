@@ -4,6 +4,9 @@ window.APP_CONFIG = {
   nome: "Haskall Restaurante e Pizzaria",
   // WhatsApp que recebe os pedidos: 55 + DDD + número, só números
   whatsapp: "5519997706586",
+  logo: "logo.jpg",
+  capa: "banner.jpg",
+  tempo: "40 a 60 min", // deixe "" para esconder
   taxaEntrega: 3,
   pagamentos: ["Pix na entrega", "Cartão de débito", "Cartão de crédito", "Dinheiro"],
   firebase: {
